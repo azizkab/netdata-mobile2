@@ -1,0 +1,42 @@
+# Déploiement de production (serveur Oracle Cloud)
+# Lancement : docker compose -f docker-compose.prod.yml up -d --build
+services:
+  mongo:
+    image: mongo:4.4   # dernière version qui fonctionne sans l'instruction CPU AVX
+    restart: unless-stopped
+    command: ["--wiredTigerCacheSizeGB", "0.5"]   # limite la mémoire utilisée par MongoDB
+    volumes:
+      - mongo_data:/data/db                         # non exposé sur internet
+
+  backend:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      MONGO_URI: mongodb://mongo:27017
+    volumes:
+      - ./models:/app/models                        # modèle de domaines conservé entre les mises à jour
+      - ./releases:/app/releases                    # APK publiés depuis le dashboard
+    # 1 seul processus (le thread d'analyse temps réel et le cache des modèles y vivent), 8 threads de requêtes
+    command: gunicorn --workers 1 --threads 8 --timeout 120 --bind 0.0.0.0:5000 app:app
+    depends_on:
+      - mongo
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data                            # certificats HTTPS
+      - caddy_config:/config
+    depends_on:
+      - backend
+
+volumes:
+  mongo_data:
+  caddy_data:
+  caddy_config:

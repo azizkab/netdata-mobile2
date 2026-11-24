@@ -1,0 +1,10 @@
+# HTTPS automatique (certificat Let's Encrypt obtenu et renouvelé par Caddy)
+{$DOMAIN} {
+	tls {
+		protocols tls1.3
+	}
+	encode gzip
+	reverse_proxy backend:5000
+}
+
+

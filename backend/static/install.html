@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Installer NetData Mobile</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header id="topbar">
+    <div class="brand">NetData <span>Mobile</span></div>
+  </header>
+
+  <main style="max-width:640px">
+    <div class="card section">
+      <h1>Installer l'application</h1>
+      <p class="muted">Application de supervision des performances et de la sécurité (Android 10 ou plus récent).</p>
+      <div id="release">Chargement...</div>
+    </div>
+
+    <div class="card section">
+      <h2>Étapes</h2>
+      <ol style="padding-left:20px;line-height:1.7">
+        <li>Appuie sur <b>Télécharger l'application</b>.</li>
+        <li>Ouvre le fichier téléchargé. Si Android le demande, autorise ton navigateur à <b>installer des applications inconnues</b>, puis reviens en arrière.</li>
+        <li>Appuie sur <b>Installer</b>, puis <b>Ouvrir</b>, et accepte les autorisations demandées.</li>
+        <li>Dans l'app, va dans <b>Paramètres → Associer ce téléphone</b> et saisis le <b>code à 6 chiffres</b> fourni par l'administrateur.</li>
+      </ol>
+      <p class="muted">Sur les téléphones Xiaomi : Paramètres → Applications → NetdataMobile → <b>Économiseur de batterie : Aucune restriction</b> et <b>Démarrage automatique : activé</b>.</p>
+    </div>
+  </main>
+
+  <script>
+    const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    fetch('/api/app/latest')
+      .then(r => (r.ok ? r.json() : null))
+      .then(info => {
+        document.getElementById('release').innerHTML = info ? `
+          <p>Version <b>${esc(info.version)}</b> · ${(info.size / 1024 / 1024).toFixed(1)} Mo · publiée le ${new Date(info.uploaded_at).toLocaleDateString('fr-FR')}</p>
+          <a href="${esc(info.download_url)}"><button class="primary" style="font-size:18px;padding:14px 20px;width:100%">Télécharger l'application</button></a>
+          <p class="muted" style="word-break:break-all;margin-top:12px">Empreinte SHA-256 : ${esc(info.sha256)}</p>`
+          : '<p>Aucune version n\'est encore publiée.</p>';
+      });
+  </script>
+</body>
+</html>

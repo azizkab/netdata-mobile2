@@ -1,0 +1,31 @@
+services:
+  mongo:
+    image: mongo:4.4   # dernière version qui fonctionne sans l'instruction CPU AVX
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:27018:27017"   # accessible uniquement depuis le PC (Compass : mongodb://localhost:27018)
+    volumes:
+      - mongo_data:/data/db
+
+  backend:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      MONGO_URI: mongodb://mongo:27017
+    ports:
+      - "5000:5000"               # accessible depuis le téléphone (même Wi-Fi)
+    volumes:
+      - .:/app                    # rechargement automatique du code
+    depends_on:
+      - mongo
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate --url http://backend:5000   # adresse HTTPS publique (Wi-Fi et 4G/5G)
+    depends_on:
+      - backend
+
+volumes:
+  mongo_data:
